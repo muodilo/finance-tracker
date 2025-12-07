@@ -2,6 +2,7 @@
 
 import { LayoutDashboard, Send, Tag, BarChart3, Settings, LogOut } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 import {
   Sidebar,
@@ -12,13 +13,11 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-// Menu items.
 const items = [
   {
     title: "Dashboard",
     url: "/dashboard",
     icon: LayoutDashboard,
-    isActive: true,
   },
   {
     title: "Transactions",
@@ -43,18 +42,20 @@ const items = [
 ]
 
 export function AppSidebar() {
+  const pathname = usePathname()
+
   return (
     <Sidebar className="border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-950">
       <SidebarContent>
-        <SidebarGroup className="px-4 py-6 border-b border-gray-200 dark:border-gray-800">
+        <SidebarGroup className="px-4 py-6 dark:border-gray-800">
           <h1 className="text-2xl font-bold text-green-600">Finance</h1>
           <p className="text-sm text-gray-600 dark:text-gray-400">Personal Tracker</p>
         </SidebarGroup>
-        <SidebarGroup className="px-2 py-6">
+        <SidebarGroup className="px-2">
           <SidebarMenu className="gap-2">
             {items.map((item) => {
               const Icon = item.icon
-              const isActive = item.isActive
+              const isActive = pathname === item.url
               return (
                 <SidebarMenuItem key={item.title}>
                   <Link
@@ -62,7 +63,7 @@ export function AppSidebar() {
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
                       isActive
                         ? "bg-green-600 text-white"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-green-600/10 dark:hover:bg-green-600/10"
                     }`}
                   >
                     <Icon className="w-5 h-5" />
