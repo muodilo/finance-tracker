@@ -1,6 +1,6 @@
 import { Navbar } from "@/components/navbar";
 import { Metrics } from "@/components/metrics";
-import { BalanceTrend } from "@/components/balance-trend";
+import { BalanceTrend } from "@/components/charts/balance-trend";
 import { RecentTransactions } from "@/components/recent-transactions";
 
 export default function Page() {

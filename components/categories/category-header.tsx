@@ -1,4 +1,6 @@
-export default function CategoryHeader() {
+import { AddCategoryDialog } from "./add-category-dialog";
+
+export default function CategoryHeader({ onCategoryAdded }: { onCategoryAdded?: () => void }) {
   return (
     <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
       <div>
@@ -6,9 +8,7 @@ export default function CategoryHeader() {
         <p className="text-sm text-gray-500 mt-1">Manage your transaction categories</p>
       </div>
       <div className="flex items-center gap-3">
-        <button className="rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700 transition-colors">
-          Add Category
-        </button>
+        <AddCategoryDialog onAdd={onCategoryAdded} />
       </div>
     </div>
   )

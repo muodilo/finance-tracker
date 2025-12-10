@@ -1,6 +1,6 @@
 "use client"
 
-import { AddTransactionDialog } from "@/components/add-transaction-dialog"
+import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog"
 import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
 
