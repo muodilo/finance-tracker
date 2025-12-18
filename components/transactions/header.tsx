@@ -16,7 +16,7 @@ export function TransactionsHeader({ onAdd }: { onAdd?: (data: any) => void }) {
         <Button variant="outline" className="inline-flex items-center gap-2">
           <Download className="w-4 h-4" /> Export CSV
         </Button>
-        <AddTransactionDialog onAdd={onAdd} />
+        <AddTransactionDialog  />
       </div>
     </div>
   )

@@ -12,10 +12,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus, Loader2, Loader } from "lucide-react"
+import { Plus, Loader2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
-import { createCategory } from "@/services/categoryService"
-import { toast } from "sonner"
+import { useCategoryStore } from "@/store/useCategoryStore"
 
 const colors = [
   { name: "red", value: "bg-red-500" },
@@ -29,8 +28,10 @@ const colors = [
   { name: "pink", value: "bg-pink-500" },
 ]
 
-export function AddCategoryDialog({ onAdd }: { onAdd?: () => void }) {
+export function AddCategoryDialog() {
   const { user } = useAuth()
+  const addCategory = useCategoryStore(state => state.addCategory)
+  
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [name, setName] = useState("")
@@ -44,19 +45,15 @@ export function AddCategoryDialog({ onAdd }: { onAdd?: () => void }) {
   }
 
   async function handleSubmit() {
-    if (!user) {
-      toast.error("You must be logged in to create a category")
-      return
-    }
+    if (!user) return
 
     if (!name.trim()) {
-      toast.error("Please enter a category name")
       return
     }
 
     setLoading(true)
     
-    const result = await createCategory(user.uid, {
+    const success = await addCategory(user.uid, {
       name: name.trim(),
       type,
       color,
@@ -64,18 +61,9 @@ export function AddCategoryDialog({ onAdd }: { onAdd?: () => void }) {
 
     setLoading(false)
 
-    if (result.success) {
-      toast.success("Category created successfully!")
+    if (success) {
       setOpen(false)
       resetForm()
-      
-      // Trigger refresh after a small delay to ensure Firestore has propagated
-      setTimeout(() => {
-        console.log("Calling onAdd callback...")
-        onAdd?.()
-      }, 300)
-    } else {
-      toast.error(result.error || "Failed to create category")
     }
   }
 
@@ -163,7 +151,7 @@ export function AddCategoryDialog({ onAdd }: { onAdd?: () => void }) {
               >
                 {loading ? (
                   <>
-                    <Loader className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Creating...
                   </>
                 ) : (

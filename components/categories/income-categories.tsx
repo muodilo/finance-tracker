@@ -1,78 +1,47 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { TagIcon, PackageOpen, Loader } from "lucide-react"
+import { useEffect } from "react"
+import { TagIcon, Loader2, PackageOpen } from "lucide-react"
 import { Card, CardContent, CardTitle } from "../ui/card"
 import { EditCategoryDialog } from "./edit-category-dialog"
 import { DeleteCategoryDialog } from "./delete-category"
-import { getUserCategories, deleteCategory, } from "@/services/categoryService"
+import { useCategoryStore } from "@/store/useCategoryStore"
 import { useAuth } from "@/contexts/AuthContext"
-import { Category } from "@/types/category"
-import { toast } from "sonner"
 
-export default function IncomeCategories({ refreshTrigger }: { refreshTrigger?: number }) {
-  const { user } = useAuth()
-  const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
-
-  // Fetch categories
-  const fetchIncomeCategories = async () => {
-    if (!user) return
-
-    setLoading(true)
-    const result = await getUserCategories(user.uid)
-    setLoading(false)
-
-    if (result.success && result.data) {
-      const incomeCategories = result.data.filter(cat => cat.type === "Income")
-      setCategories(incomeCategories)
-    } else {
-      toast.error(result.error || "Failed to fetch categories")
-    }
+const getColorClass = (color: string) => {
+  const colorMap: { [key: string]: string } = {
+    red: "bg-red-500",
+    orange: "bg-orange-500",
+    yellow: "bg-yellow-500",
+    green: "bg-green-500",
+    teal: "bg-teal-500",
+    blue: "bg-blue-500",
+    indigo: "bg-indigo-500",
+    purple: "bg-purple-500",
+    pink: "bg-pink-500",
   }
+  return colorMap[color] || "bg-gray-500"
+}
+
+export default function IncomeCategories() {
+  const { user } = useAuth()
+  const { incomeCategories, loading, fetchCategories } = useCategoryStore()
+  
+  const categories = incomeCategories()
 
   useEffect(() => {
-    fetchIncomeCategories()
-  }, [user, refreshTrigger])
-
-
-  const handleEdit = () => {
-    fetchIncomeCategories()
-  }
-
-  const handleDelete = async (id: string) => {
-    const result = await deleteCategory(id)
-    
-    if (result.success) {
-      toast.success("Category deleted successfully!")
-      fetchIncomeCategories() 
-    } else {
-      toast.error(result.error || "Failed to delete category")
+    if (user) {
+      fetchCategories(user.uid)
     }
-  }
+  }, [user, fetchCategories])
 
-  const getColorClass = (color: string) => {
-    const colorMap: { [key: string]: string } = {
-      red: "bg-red-500",
-      orange: "bg-orange-500",
-      yellow: "bg-yellow-500",
-      green: "bg-green-500",
-      teal: "bg-teal-500",
-      blue: "bg-blue-500",
-      indigo: "bg-indigo-500",
-      purple: "bg-purple-500",
-      pink: "bg-pink-500",
-    }
-    return colorMap[color] || "bg-gray-500"
-  }
-
+  // Loading state
   if (loading) {
     return (
       <Card>
         <CardContent className="py-12">
-
           <div className="flex flex-col items-center justify-center gap-4">
-            <Loader className="w-8 h-8 animate-spin text-green-500" />
+            <Loader2 className="w-8 h-8 animate-spin text-green-500" />
             <p className="text-sm text-gray-500 dark:text-gray-400">Loading income categories...</p>
           </div>
         </CardContent>
@@ -80,6 +49,7 @@ export default function IncomeCategories({ refreshTrigger }: { refreshTrigger?: 
     )
   }
 
+  // Empty state
   if (categories.length === 0) {
     return (
       <Card>
@@ -102,6 +72,7 @@ export default function IncomeCategories({ refreshTrigger }: { refreshTrigger?: 
     )
   }
 
+  // Categories list
   return (
     <Card>
       <CardContent>
@@ -119,8 +90,8 @@ export default function IncomeCategories({ refreshTrigger }: { refreshTrigger?: 
                   <p className="text-xs bg-green-500/15 px-2 rounded-full text-green-500">Income</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <EditCategoryDialog category={category} onEdit={handleEdit} />
-                  <DeleteCategoryDialog category={category} onDelete={handleDelete} />
+                  <EditCategoryDialog category={category} />
+                  <DeleteCategoryDialog category={category} />
                 </div>
               </div>
             </div>

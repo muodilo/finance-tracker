@@ -15,8 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Edit, Loader2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
-import { updateCategory } from "@/services/categoryService"
-import { toast } from "sonner"
+import { useCategoryStore } from "@/store/useCategoryStore"
 import { Category } from "@/types/category"
 
 const colors = [
@@ -33,11 +32,12 @@ const colors = [
 
 interface EditCategoryDialogProps {
   category: Category
-  onEdit?: () => void
 }
 
-export function EditCategoryDialog({ category, onEdit }: EditCategoryDialogProps) {
+export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
   const { user } = useAuth()
+  const editCategory = useCategoryStore(state => state.editCategory)
+  
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [name, setName] = useState(category.name)
@@ -51,19 +51,15 @@ export function EditCategoryDialog({ category, onEdit }: EditCategoryDialogProps
   }
 
   async function handleSubmit() {
-    if (!user) {
-      toast.error("You must be logged in to edit a category")
-      return
-    }
+    if (!user) return
 
     if (!name.trim()) {
-      toast.error("Please enter a category name")
       return
     }
 
     setLoading(true)
 
-    const result = await updateCategory(category.id, user.uid, {
+    const success = await editCategory(category.id, user.uid, {
       name: name.trim(),
       type,
       color,
@@ -71,12 +67,8 @@ export function EditCategoryDialog({ category, onEdit }: EditCategoryDialogProps
 
     setLoading(false)
 
-    if (result.success) {
-      toast.success("Category updated successfully!")
+    if (success) {
       setOpen(false)
-      onEdit?.() // Trigger refresh
-    } else {
-      toast.error(result.error || "Failed to update category")
     }
   }
 
