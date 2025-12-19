@@ -1,63 +1,99 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { TransactionsHeader } from "@/components/transactions/header"
 import { TransactionsStats } from "@/components/transactions/stats"
 import { TransactionsFilters } from "@/components/transactions/filters"
-import { RecentTransactions, DEFAULT_TRANSACTIONS, Transaction } from "@/components/recent-transactions"
-import { DollarSign, ShoppingCart } from "lucide-react"
+import { RecentTransactions } from "@/components/recent-transactions"
 import { Navbar } from "@/components/navbar"
 
+import { useAuth } from "@/contexts/AuthContext"
+import { getUserTransactions, createTransaction } from "@/services/transactionService"
+
 export default function Page() {
-  const [transactions, setTransactions] = useState<Transaction[]>(DEFAULT_TRANSACTIONS)
+  const { user } = useAuth()
 
-  function parseAmount(amountStr: string) {
-    const num = Number(amountStr.replace(/[^0-9.-]+/g, ""))
-    return Number.isNaN(num) ? 0 : num
-  }
+  const [transactions, setTransactions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const totalIncome = transactions.reduce((sum, t) => (t.positive ? sum + parseAmount(t.amount) : sum), 0)
-  const totalExpense = transactions.reduce((sum, t) => (!t.positive ? sum + Math.abs(parseAmount(t.amount)) : sum), 0)
+  // Fetch transactions for logged-in user
+  useEffect(() => {
+    async function load() {
+      if (!user) return
+
+      setLoading(true)
+      const result = await getUserTransactions(user.uid)
+
+      if (result.success && result.data) {
+        setTransactions(result.data)
+      }
+
+      setLoading(false)
+    }
+
+    load()
+  }, [user])
+
+  // Calculate totals
+  const totalIncome = transactions
+    .filter((t) => t.type === "income")
+    .reduce((sum, t) => sum + Number(t.amount), 0)
+
+  const totalExpense = transactions
+    .filter((t) => t.type === "expense")
+    .reduce((sum, t) => sum + Number(t.amount), 0)
+
   const net = totalIncome - totalExpense
 
   function formatMoney(n: number) {
     return n.toLocaleString(undefined, { style: "currency", currency: "USD" })
   }
 
-  function handleAdd(data: any) {
-    const id = Date.now()
-    const positive = data.type === "income"
-    const amt = data.amount ? data.amount.replace(/[^0-9.]/g, "") : "0.00"
-    const amountStr = positive ? `+$${amt}` : `-$${amt}`
-    const date = data.date || new Date().toLocaleDateString()
-    const icon = positive ? DollarSign : ShoppingCart
-    const title = data.description || (positive ? "Income" : "Expense")
-    const category = data.category || "Other"
+  // Add new transaction
+  async function handleAdd(data: any) {
+    if (!user) return
 
-    const newTx: Transaction = {
-      id,
-      title,
-      category,
-      amount: amountStr,
-      date,
-      icon,
-      positive,
+    const txData = {
+      title: data.description || "Untitled",
+      category: data.category || "Uncategorized",
+      amount: Number(data.amount),
+      date: data.date || new Date().toLocaleDateString(),
+      icon: data.type === "income" ? "salary" : "food",
+      type: data.type,
     }
 
-    setTransactions((prev) => [newTx, ...prev])
+    // Save to Firestore
+    const result = await createTransaction(user.uid, txData)
+
+    if (result.success) {
+      // Reload transactions
+      const reload = await getUserTransactions(user.uid)
+      if (reload.success && reload.data) {
+        setTransactions(reload.data)
+      }
+    }
   }
 
   return (
     <div className="min-h-screen">
       <Navbar />
+
       <main className="p-6 space-y-6">
         <TransactionsHeader onAdd={handleAdd} />
 
-        <TransactionsStats totalIncome={formatMoney(totalIncome)} totalExpense={formatMoney(totalExpense)} netBalance={formatMoney(net)} />
+        <TransactionsStats
+          totalIncome={formatMoney(totalIncome)}
+          totalExpense={formatMoney(totalExpense)}
+          netBalance={formatMoney(net)}
+        />
 
         <TransactionsFilters />
 
-        <RecentTransactions transactions={transactions} />
+        {loading ? (
+          <p className="text-center text-gray-400">Loading...</p>
+        ) : (
+          <RecentTransactions />
+        )}
       </main>
     </div>
   )
