@@ -31,7 +31,7 @@ export function RecentTransactions() {
       const result = await getUserTransactions(user.uid)
 
       if (result.success && result.data) {
-        setTransactions(result.data as FirestoreTransaction[])
+        setTransactions(result.data as unknown as FirestoreTransaction[])
       }
 
       setLoading(false)
